@@ -1,0 +1,427 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>擲筊祈福遊戲</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background-color: #FDF5E6;
+            background-image: url('image/pattern_wall.png');
+            background-repeat: repeat;
+            color: #333;
+            margin: 0;
+            padding: 10px;
+            box-sizing: border-box;
+            overflow: hidden;
+        }
+        .container {
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            text-align: center;
+            width: 100%;
+            max-width: 500px;
+            box-sizing: border-box;
+            border: 1px solid #ddd;
+            display: flex;
+            flex-direction: column;
+            max-height: calc(100vh - 40px);
+        }
+        h1, h2 {
+            color: #D42C2C;
+            margin: 0 0 15px 0;
+            flex-shrink: 0;
+        }
+        h1 { font-size: 28px; }
+        h2 { font-size: 22px; }
+
+        #persistentGodInfo {
+            display: none; /* Initially hidden */
+            text-align: center;
+            margin-bottom: 15px;
+            padding: 10px;
+            background-color: #fffaf0;
+            border-radius: 10px;
+            border: 1px solid #fde4b5;
+        }
+        #persistentGodImage {
+            max-height: 120px;
+            width: auto;
+            border-radius: 10px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+        }
+        #persistentGodName {
+            color: #D42C2C;
+            font-size: 20px;
+            font-weight: bold;
+            margin-top: 8px;
+            margin-bottom: 0;
+        }
+
+        .section {
+            padding: 15px;
+            border: 1px solid #eee;
+            border-radius: 10px;
+            background-color: #f9f9f9;
+            transition: background-image 0.5s ease-in-out;
+            display: flex;
+            flex-direction: column;
+            width: 100%;
+            box-sizing: border-box;
+        }
+        .section-content {
+            display: none;
+        }
+        .section-content.active {
+            display: flex;
+            min-height: 0;
+        }
+        select, input[type="text"], input[type="date"], textarea {
+            width: 100%;
+            padding: 8px;
+            margin-bottom: 10px;
+            border: 1px solid #ccc;
+            border-radius: 8px;
+            font-size: 16px;
+            box-sizing: border-box;
+            flex-shrink: 0;
+        }
+        textarea {
+            resize: vertical;
+            min-height: 60px;
+        }
+        button {
+            background-color: #D42C2C;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: background-color 0.3s ease;
+            margin: 5px;
+            flex-shrink: 0;
+        }
+        button:hover {
+            background-color: #B02727;
+        }
+        
+        .god-info {
+            margin-top: 15px;
+            padding: 10px;
+            padding-right: 5px;
+            background-color: rgba(255, 250, 230, 0.5);
+            border-radius: 10px;
+            display: none; /* Initially hidden, shown in step 1 */
+            flex-direction: column;
+            text-align: left;
+            overflow-y: auto; 
+            min-height: 0;
+            flex-shrink: 0;
+        }
+        .god-info img {
+            display: block;
+            max-height: 20vh;
+            width: auto;
+            max-width: 100%;
+            border-radius: 10px;
+            margin: 0 auto 10px auto;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        }
+        .god-info h3 {
+            color: #D42C2C;
+            margin-bottom: 8px;
+        }
+        .god-info p {
+            font-size: 15px;
+            line-height: 1.6;
+            margin-bottom: 10px;
+        }
+        
+        .jiao-container { display: flex; justify-content: center; align-items: center; height: 110px; margin: 15px 0; position: relative; flex-shrink: 0; }
+        .jiao { width: 100px; height: 100px; background-color: white; border-radius: 50%; margin: 0 15px; box-shadow: 0 4px 10px rgba(0, 0, 0, 0.4); display: flex; justify-content: center; align-items: center; font-size: 0; color: transparent; transition: background-color 0.3s ease, transform 0.1s ease-out; border: none; transform-style: preserve-3d; perspective: 1000px; }
+        .jiao.flat { transform: rotateX(0deg); background-color: white; }
+        .jiao.convex { transform: rotateX(180deg); background-color: black; }
+        .jiao.rolling { animation: dotRoll 0.5s infinite linear; }
+        @keyframes dotRoll { 0% { transform: rotateY(0deg) rotateX(0deg); } 100% { transform: rotateY(360deg) rotateX(360deg); } }
+        
+        .jiao-result { margin-top: 10px; padding: 0 10px; font-size: 16px; font-weight: bold; color: #333; min-height: 80px; display: flex; align-items: center; justify-content: center; border-radius: 8px; background-color: rgba(0,0,0,0.02); border: 1px solid rgba(0,0,0,0.05); flex-shrink: 0; }
+        .jiao-result.positive { color: #2E7D32; }
+        .jiao-result.negative { color: #D42C2C; }
+        .jiao-result.neutral { color: #FF8C00; }
+
+        .popup { display: none; position: fixed; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.5); justify-content: center; align-items: center; z-index: 1002; }
+        .popup-content { background-color: #fff; padding: 20px; border-radius: 10px; text-align: center; box-shadow: 0 5px 15px rgba(0,0,0,0.3); max-width: 500px; width: 90%; }
+        .popup-content h3 { color: #D42C2C; margin-bottom: 10px; }
+        .popup-content p { margin-bottom: 15px; font-size: 16px; }
+        .popup-buttons button { margin: 5px; }
+
+        .warning-message { color: #D42C2C; font-weight: bold; margin-top: 10px; margin-bottom: 10px; padding: 8px; border: 1px solid #D42C2C; background-color: #FFF0F0; border-radius: 8px; display: none; flex-shrink: 0; }
+        .warning-message.active { display: block; }
+        
+        #giantCoinContainer, #smileAnimationContainer, #godRaysContainer { position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; display: none; }
+        #giantCoinContainer { z-index: 1001; justify-content: center; align-items: flex-end; overflow: hidden; }
+        #smileAnimationContainer { z-index: 999; justify-content: center; align-items: center; transform: translate(-50%, -50%); top: 50%; left: 50%; width: min(70vw, 70vh); height: min(70vw, 70vh); font-size: min(60vw, 60vh); color: #FFD700; opacity: 0; }
+        
+        #godRaysContainer { z-index: 1003; overflow: hidden; }
+        #giantCoinContainer .coin-icon { font-size: 25vw; color: gold; text-shadow: 0 0 20px rgba(255, 215, 0, 0.8), 0 0 5px rgba(0,0,0,0.5); animation: spinAndRise 3s ease-in-out forwards; }
+        @keyframes spinAndRise { from { transform: translateY(0) rotateY(0deg); opacity: 1; } to { transform: translateY(-80vh) rotateY(1080deg); opacity: 0; } }
+        #smileAnimationContainer .fas { text-shadow: 0 0 15px rgba(255, 215, 0, 0.9), 0 0 30px rgba(255, 215, 0, 0.7); font-weight: 900; animation: appearAndFadeOut 2s ease-in-out forwards; }
+        @keyframes appearAndFadeOut { 0% { opacity: 0; transform: scale(0.5); } 10% { opacity: 1; transform: scale(1.2); } 90% { opacity: 1; transform: scale(1.0); } 100% { opacity: 0; transform: scale(0.5); } }
+        .ray { position: absolute; left: 50%; top: 0; width: 150px; height: 0%; background: linear-gradient(to bottom, rgba(255, 223, 150, 0.6), transparent); transform-origin: top center; opacity: 0; clip-path: polygon(50% 0%, 0% 100%, 100% 100%); }
+        .ray.play-animation { animation: rayShineDown 2.5s ease-out forwards; }
+        .ray.ray1 { transform: translateX(-50%) rotateZ(-50deg); animation-delay: 0s; }
+        .ray.ray2 { transform: translateX(-50%) rotateZ(-30deg); animation-delay: 0.1s; }
+        .ray.ray3 { transform: translateX(-50%) rotateZ(-10deg); animation-delay: 0.2s; }
+        .ray.ray4 { transform: translateX(-50%) rotateZ(10deg);  animation-delay: 0.3s; }
+        .ray.ray5 { transform: translateX(-50%) rotateZ(30deg);  animation-delay: 0.4s; }
+        .ray.ray6 { transform: translateX(-50%) rotateZ(50deg);  animation-delay: 0.5s; }
+        @keyframes rayShineDown { 0% { height: 0%; opacity: 0; } 50% { height: 150%; opacity: 0.8; } 100% { height: 150%; opacity: 0; } }
+        .petition-matter-display { margin-top: 10px; padding: 8px; background-color: #f0f8ff; border-left: 5px solid #2E7D32; text-align: left; font-style: italic; color: #555; border-radius: 5px; word-wrap: break-word; }
+        .petition-matter-display strong { color: #D42C2C; }
+        
+        @media (max-width: 600px) {
+            .container { padding: 15px; max-height: calc(100vh - 20px); }
+            button { padding: 10px 15px; }
+            select, input[type="text"], input[type="date"], textarea { font-size: 14px; }
+            .jiao { width: 70px; height: 70px; }
+            .jiao-container { height: 80px; }
+            #giantCoinContainer .coin-icon, #smileAnimationContainer .fas { font-size: 120px; }
+            .ray { width: 80px; } 
+            #persistentGodImage { max-height: 100px; }
+            #persistentGodName { font-size: 18px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>擲筊祈福遊戲</h1>
+
+        <div id="persistentGodInfo">
+            <img id="persistentGodImage" src="">
+            <h3 id="persistentGodName"></h3>
+        </div>
+
+        <div id="step1" class="section section-content active">
+            <h2>步驟一：選擇神明</h2>
+            <select id="godSelect" style="margin-bottom: 15px;">
+                <option value="">請選擇您想請示的神明</option>
+                 <optgroup label="姻緣"><option value="月老">月老</option></optgroup>
+                <optgroup label="學業"><option value="文昌帝君">文昌帝君</option></optgroup>
+                <optgroup label="事業"><option value="財神爺">財神爺</option><option value="城隍爺">城隍爺</option><option value="土地公">土地公</option><option value="九天玄女">九天玄女</option><option value="三太子">三太子</option><option value="五府千歲">五府千歲</option></optgroup>
+                <optgroup label="財運"><option value="五路財神">五路財神</option></optgroup>
+                <optgroup label="健康"><option value="神農大帝">神農大帝</option><option value="保生大帝">保生大帝</option><option value="藥師佛">藥師佛</option><option value="註生娘娘(健康)">註生娘娘</option><option value="王母娘娘">王母娘娘</option><option value="華陀先師">華陀先師</option></optgroup>
+                <optgroup label="除魔"><option value="玄天上帝">玄天上帝</option><option value="關聖帝君(除魔)">關聖帝君</option><option value="虎爺">虎爺</option></optgroup>
+                <optgroup label="求子"><option value="註生娘娘(求子)">註生娘娘</option><option value="臨水夫人">臨水夫人</option></optgroup>
+            </select>
+            
+            <div id="godInfo" class="god-info">
+                <img id="godImage" src="" alt="神明圖片" onerror="this.onerror=null; this.src='https://placehold.co/330x200/cccccc/000000?text=圖片載入失敗';">
+                <h3 id="godName"></h3>
+                <p id="godDescription"></p>
+                <p id="godTemples"></p>
+            </div>
+            
+            <button onclick="nextStep(2)" id="selectGodBtn" disabled>下一步</button>
+        </div>
+
+        <div id="step2" class="section section-content">
+            <h2>步驟二：填寫信徒資料與請示事項</h2>
+            <label for="name">姓名:</label>
+            <input type="text" id="name" placeholder="請輸入您的姓名" required>
+            <label for="dob">生日:</label>
+            <input type="date" id="dob" required>
+            <p style="margin: 2px 0 10px 0; font-size: 14px; text-align:left;">您的歲數：<span id="calculatedAge"></span> | 您的生肖：<span id="calculatedZodiac"></span></p>
+            <label for="matter">請示的事情:</label>
+            <textarea id="matter" placeholder="請清楚說明您想請示的事情（越具體越好）" required></textarea>
+            <button onclick="submitForm()">確認資料並開始擲筊</button>
+        </div>
+
+        <div id="step3" class="section section-content">
+            <h2>步驟三：擲筊請示</h2>
+            <p id="jiaoInstructions" style="flex-shrink:0;">請點擊擲筊按鈕開始請示。需連續三次聖筊才算成功！</p>
+            <div id="petitionMatterDisplay" class="petition-matter-display" style="flex-shrink:0;"></div>
+            <div id="reuseWarning" class="warning-message"></div>
+            <div class="jiao-container" id="jiaoContainer">
+                <div class="jiao" id="jiao1"></div>
+                <div class="jiao" id="jiao2"></div>
+            </div>
+            <button id="throwJiaoBtn" onclick="throwJiao()">點擊擲筊</button>
+            <div id="jiaoResult" class="jiao-result"></div>
+            <p id="jiaoCount" style="flex-shrink:0; margin-bottom: 0;">目前聖筊次數：<span id="currentSacredJiao">0</span>/3</p>
+        </div>
+        
+    </div>
+    
+    <div id="godRaysContainer"><div class="ray ray1"></div><div class="ray ray2"></div><div class="ray ray3"></div><div class="ray ray4"></div><div class="ray ray5"></div><div class="ray ray6"></div></div>
+    <div id="giantCoinContainer"><i class="fas fa-dollar-sign coin-icon"></i></div>
+    <div id="smileAnimationContainer"><i class="fas fa-grin"></i></div>
+
+    <div id="reEnterPopup" class="popup"><div class="popup-content"><h3 id="reEnterPopupTitle">擲筊失敗！</h3><p id="reEnterMessage"></p><div class="popup-buttons"><button onclick="reEnterData()">重新填寫資料</button><button onclick="donateOilMoney()">添香油錢繼續</button></div></div></div>
+    <div id="xiaoJiaoPopup" class="popup"><div class="popup-content"><h3 id="xiaoJiaoPopupTitle"></h3><p id="xiaoJiaoPopupMessage"></p><textarea id="editMatter" style="width: calc(100% - 20px); min-height: 80px;"></textarea><button onclick="updateMatterAndContinue()">修改完成，繼續擲筊</button></div></div>
+    <div id="successPopup" class="popup"><div class="popup-content"><img id="successGodImage" src="" alt="神明圖片" style="display: none; max-height: 150px; width: auto; margin: 0 auto 15px; border-radius: 10px;"><h3>恭喜！獲得三個聖筊！</h3><p id="successMessage"></p><div class="popup-buttons"><button onclick="shareResult()"><i class="fas fa-share-alt"></i> 分享喜悅</button><button onclick="resetGame()">重新開始</button></div></div></div>
+    <div id="customMessagePopup" class="popup"><div class="popup-content"><h3 id="customMessageTitle"></h3><p id="customMessageText"></p><button onclick="this.parentNode.parentNode.style.display='none'">確定</button></div></div>
+
+    <script>
+        const godData = { "月老": { image: "image/Yue Lao.png", description: "月老是掌管男女姻緣的神祇...", temples: "台灣知名的月老廟宇包括：台北霞海城隍廟、艋舺龍山寺、台南大天后宮等。" }, "文昌帝君": { image: "image/Wenchang Dijun.png", description: "文昌帝君是中國民間信仰中的學業之神...", temples: "台灣知名的文昌廟有：台北文昌宮、新莊文昌祠、台中南屯文昌宮等。" }, "財神爺": { image: "image/God of Wealth.png", description: "武財神 (趙公明、關聖帝君)...", temples: "台灣知名的財神廟有：北港武德宮、草屯敦和宮、金山五路財神廟等。" }, "城隍爺": { image: "image/The City God.png", description: "城隍爺掌管地方陰陽和諧...", temples: "台灣知名的城隍廟有：新竹都城隍廟、台北霞海城隍廟、臺灣府城隍廟等。" }, "土地公": { image: "image/The Earth God.png", description: "土地公是地方守護神...", temples: "台灣知名的土地公廟有：車城福安宮、烘爐地南山福德宮等。" }, "九天玄女": { image: "image/The Mystic Lady of the Nine Heavens.png", description: "九天玄女掌管力量和事業能量...", temples: "台灣知名的九天玄女廟有：松山慈惠堂、梨山慈惠堂、仙山協靈宮等。" }, "三太子": { image: "image/Nezha.png", description: "三太子被認為能幫助事業順遂。", temples: "台灣知名的三太子廟有：新營太子宮、高雄三鳳宮等。" }, "五府千歲": { image: "image/The Five Royal Lords.png", description: "五府千歲在台灣民間信仰中普遍...", temples: "台灣王爺總廟為：南鯤鯓代天府。" }, "五路財神": { image: "image/The Five Gods of Wealth from Five Directions.png", description: "五路財神象徵財運從四面八方匯聚而來...", temples: "台灣知名的財神廟有：北港武德宮、石碇五路財神廟等。" }, "神農大帝": { image: "image/Shennong.png", description: "神農大帝又稱「藥王」...", temples: "台灣知名的神農大帝廟有：三重先嗇宮、台南神農殿等。" }, "保生大帝": { image: "image/the Great Emperor of Protecting Life.png", description: "保生大帝適合祈求外傷痊癒...", temples: "台灣知名的保生大帝廟有：台北大龍峒保安宮、台南學甲慈濟宮等。" }, "藥師佛": { image: "image/the Medicine Buddha.png", description: "藥師佛適合祈求消災延壽...", temples: "台灣各大佛教寺院皆可祈求，如：佛光山、法鼓山等。" }, "註生娘娘(健康)": { image: "image/Goddess of Birth.png", description: "註生娘娘民間深信其掌管一個人的出生...", temples: "台灣各地主祀媽祖或註生娘娘的廟宇皆可祈求，如：松山慈祐宮、台南臨水夫人廟等。" }, "王母娘娘": { image: "image/Queen Mother.png", description: "王母娘娘被認為能傾聽人們祈禱...", temples: "台灣知名的王母娘娘廟有：花蓮勝安宮、松山慈惠堂等。" }, "華陀先師": { image: "image/Hua Tuo.png", description: "華陀先師醫術高超...", temples: "台灣部分廟宇有供奉，如高雄旗山飛鳳寺。" }, "玄天上帝": { image: "image/Xuantian God.png", description: "玄天上帝又稱「黑面玄天上帝」...", temples: "台灣知名的玄天上帝廟有：南投松柏嶺受天宮、高雄北極亭等。" }, "關聖帝君(除魔)": { image: "image/Guan Yu Emperor.png", description: "關聖帝君除了財神職能...", temples: "台灣知名的關帝廟有：日月潭文武廟、台北行天宮、台南祀典武廟等。" }, "虎爺": { image: "image/Tiger Lord.png", description: "虎爺又稱「黑虎將軍」...", temples: "台灣多數大廟皆有供奉，如：新港奉天宮、北港朝天宮等。" }, "註生娘娘(求子)": { image: "image/Goddess of Birth.png", description: "註生娘娘是閩台民間信仰的生育女神...", temples: "台灣知名的註生娘娘廟有：台南臨水夫人廟、高雄註生宮等。" }, "臨水夫人": { image: "image/Lady Linshui.png", description: "臨水夫人 (陳靖姑) 也是婦女及兒童的保護神...", temples: "台灣臨水夫人媽廟的總廟為：台南臨水夫人廟。" } };
+
+        let currentSacredJiaoCount = 0, consecutiveFailureCount = 0, selectedGod = null;
+        let donatedGoodLuck = false; 
+
+        const elements = {
+            godSelect: document.getElementById('godSelect'), godInfoDiv: document.getElementById('godInfo'), godImage: document.getElementById('godImage'), godName: document.getElementById('godName'), godDescription: document.getElementById('godDescription'), godTemples: document.getElementById('godTemples'), selectGodBtn: document.getElementById('selectGodBtn'), nameInput: document.getElementById('name'), dobInput: document.getElementById('dob'), calculatedAgeSpan: document.getElementById('calculatedAge'), calculatedZodiacSpan: document.getElementById('calculatedZodiac'), matterInput: document.getElementById('matter'), step1: document.getElementById('step1'), step2: document.getElementById('step2'), step3: document.getElementById('step3'), jiao1: document.getElementById('jiao1'), jiao2: document.getElementById('jiao2'), throwJiaoBtn: document.getElementById('throwJiaoBtn'), jiaoResultDiv: document.getElementById('jiaoResult'), currentSacredJiaoSpan: document.getElementById('currentSacredJiao'), reuseWarningDiv: document.getElementById('reuseWarning'), petitionMatterDisplay: document.getElementById('petitionMatterDisplay'), reEnterPopup: document.getElementById('reEnterPopup'), reEnterPopupTitle: document.getElementById('reEnterPopupTitle'), reEnterMessage: document.getElementById('reEnterMessage'), xiaoJiaoPopup: document.getElementById('xiaoJiaoPopup'), xiaoJiaoPopupTitle: document.getElementById('xiaoJiaoPopupTitle'), xiaoJiaoPopupMessage: document.getElementById('xiaoJiaoPopupMessage'), editMatterTextarea: document.getElementById('editMatter'), successPopup: document.getElementById('successPopup'), successMessage: document.getElementById('successMessage'), successGodImage: document.getElementById('successGodImage'), customMessagePopup: document.getElementById('customMessagePopup'), customMessageTitle: document.getElementById('customMessageTitle'), customMessageText: document.getElementById('customMessageText'), giantCoinContainer: document.getElementById('giantCoinContainer'), smileAnimationContainer: document.getElementById('smileAnimationContainer'), godRaysContainer: document.getElementById('godRaysContainer'),
+            persistentGodInfo: document.getElementById('persistentGodInfo'), persistentGodImage: document.getElementById('persistentGodImage'), persistentGodName: document.getElementById('persistentGodName')
+        };
+        
+        function saveUserData() { localStorage.setItem('jiaoGameUserData', JSON.stringify({ name: elements.nameInput.value, dob: elements.dobInput.value })); }
+        function loadUserData() { const userData = JSON.parse(localStorage.getItem('jiaoGameUserData')); if (userData) { elements.nameInput.value = userData.name || ''; elements.dobInput.value = userData.dob || ''; if (elements.dobInput.value) calculateAgeAndZodiac(); } }
+
+        // --- THIS FUNCTION WAS MODIFIED ---
+        elements.godSelect.addEventListener('change', function() {
+            selectedGod = this.value;
+            if (selectedGod && godData[selectedGod]) {
+                const info = godData[selectedGod];
+                const deityName = info.name || selectedGod;
+
+                // Update full info in Step 1
+                elements.godName.textContent = deityName;
+                elements.godDescription.textContent = info.description;
+                elements.godTemples.textContent = info.temples;
+                elements.godImage.src = info.image;
+                elements.godInfoDiv.style.display = 'flex';
+
+                // Update persistent info (but keep it hidden for now)
+                elements.persistentGodName.textContent = deityName;
+                elements.persistentGodImage.src = info.image;
+                
+                elements.selectGodBtn.disabled = false;
+            } else {
+                elements.godInfoDiv.style.display = 'none';
+                elements.persistentGodInfo.style.display = 'none'; // Also hide this if selection is cleared
+                elements.selectGodBtn.disabled = true;
+            }
+        });
+
+        elements.dobInput.addEventListener('change', calculateAgeAndZodiac);
+        
+        function calculateAgeAndZodiac() {
+            const dobValue = elements.dobInput.value; if (!dobValue) { elements.calculatedAgeSpan.textContent = ""; elements.calculatedZodiacSpan.textContent = ""; return; }
+            const birthDate = new Date(dobValue); const today = new Date(); let age = today.getFullYear() - birthDate.getFullYear(); const monthDifference = today.getMonth() - birthDate.getMonth();
+            if (monthDifference < 0 || (monthDifference === 0 && today.getDate() < birthDate.getDate())) { age--; }
+            elements.calculatedAgeSpan.textContent = age >= 0 ? age : "請選擇有效生日";
+            const birthYear = birthDate.getFullYear();
+            if (birthYear > 0) {
+                const heavenlyStems = ['甲', '乙', '丙', '丁', '戊', '己', '庚', '辛', '壬', '癸']; const earthlyBranches = ['子', '丑', '寅', '卯', '辰', '巳', '午', '未', '申', '酉', '戌', '亥']; const zodiacs = ['鼠', '牛', '虎', '兔', '龍', '蛇', '馬', '羊', '猴', '雞', '狗', '豬'];
+                let ganIndex = (birthYear - 4) % 10; let zhiIndex = (birthYear - 4) % 12;
+                if (ganIndex < 0) ganIndex += 10; if (zhiIndex < 0) zhiIndex += 12;
+                const gan = heavenlyStems[ganIndex]; const zhi = earthlyBranches[zhiIndex]; const zodiac = zodiacs[zhiIndex];
+                elements.calculatedZodiacSpan.textContent = `(${gan}${zhi})${zodiac}`;
+            } else { elements.calculatedZodiacSpan.textContent = ""; }
+        }
+        
+        // --- THIS FUNCTION WAS MODIFIED ---
+        function nextStep(e) {
+            // Control the visibility of the persistent god info based on the current step
+            if (e > 1 && selectedGod) {
+                elements.persistentGodInfo.style.display = 'block';
+            } else {
+                elements.persistentGodInfo.style.display = 'none';
+            }
+
+            document.querySelectorAll(".section-content").forEach(t => { t.classList.remove("active") });
+            let t = document.getElementById("step" + e);
+            t && t.classList.add("active");
+            if (3 === e) {
+                currentSacredJiaoCount = 0;
+                consecutiveFailureCount = 0;
+                updateSacredJiaoCount();
+                elements.reuseWarningDiv.classList.remove("active");
+                updatePetitionDisplay();
+            }
+        }
+
+        function updatePetitionDisplay(){elements.petitionMatterDisplay.innerHTML=`向 <strong>${elements.persistentGodName.textContent}</strong> 請示：<br>信徒 <strong>${elements.nameInput.value.trim()}</strong> 請示的事情：${elements.matterInput.value.trim()}`}
+        
+        function submitForm(){if(!elements.nameInput.value||!elements.dobInput.value||!elements.matterInput.value)return void showCustomMessage("提示","請填寫您的姓名、生日及請示事項！");if(parseInt(elements.calculatedAgeSpan.textContent)<0)return void showCustomMessage("提示","請選擇一個有效的生日日期！");saveUserData(),nextStep(3)}
+        
+        function throwJiao() {
+            elements.throwJiaoBtn.disabled = true; elements.jiao1.classList.add("rolling"); elements.jiao2.classList.add("rolling"); elements.jiaoResultDiv.textContent = ""; elements.jiaoResultDiv.className = "jiao-result";
+            setTimeout(() => {
+                elements.jiao1.classList.remove("rolling"); elements.jiao2.classList.remove("rolling");
+                let result1, result2; let probShengJiao = (currentSacredJiaoCount === 2) ? 0.75 : 0.5; 
+                if (donatedGoodLuck) { probShengJiao = 0.70; donatedGoodLuck = false; }
+                let randomNum = Math.random();
+                if (randomNum < probShengJiao) { result1 = "flat"; result2 = "convex"; } else if (randomNum < probShengJiao + (1 - probShengJiao) / 2) { result1 = "flat"; result2 = "flat"; } else { result1 = "convex"; result2 = "convex"; }
+                if (Math.random() < 0.5) { [result1, result2] = [result2, result1]; }
+                elements.jiao1.classList.remove("flat", "convex"); elements.jiao2.classList.remove("flat", "convex"); elements.jiao1.classList.add(result1); elements.jiao2.classList.add(result2);
+                displayJiaoResult(result1, result2); elements.throwJiaoBtn.disabled = false;
+            }, 1500);
+        }
+
+        function displayJiaoResult(e, t) {
+            let n, o = ""; const deityName = elements.persistentGodName.textContent; 
+            if ((e === "flat" && t === "convex") || (e === "convex" && t === "flat")) { n = `聖筊：表示 ${deityName} 允許、同意，或行事會順利。`; elements.jiaoResultDiv.classList.add("positive"); currentSacredJiaoCount++; consecutiveFailureCount = 0; o = "sheng";
+            } else if (e === "flat" && t === "flat") { n = `笑筊：表示 ${deityName} 一笑、不解，或者還在考慮中。`; elements.jiaoResultDiv.classList.add("neutral"); o = "xiao";
+            } else { n = `陰筊：表示 ${deityName} 否定、憤怒，或者不宜行事。`; elements.jiaoResultDiv.classList.add("negative"); currentSacredJiaoCount = 0; consecutiveFailureCount++; o = "yin"; }
+            elements.jiaoResultDiv.textContent = n; updateSacredJiaoCount();
+            if (o === "sheng" && currentSacredJiaoCount >= 3) { handleGameWin(); } else if (o === "xiao") { setTimeout(handleXiaoJiao, 1000); } else if (o === "yin") { setTimeout(() => handleNonSacredJiao(n), 1000); }
+        }
+        
+        function handleGameWin() {
+            const deityName = elements.persistentGodName.textContent; elements.smileAnimationContainer.style.display="flex"; elements.godRaysContainer.style.display="block";
+            document.querySelectorAll(".ray").forEach(e=>{e.classList.add("play-animation")});
+            elements.successGodImage.src = elements.persistentGodImage.src; elements.successGodImage.style.display = 'block';
+            elements.successMessage.textContent= `${deityName} 已允准您的請示，祝您心想事成，萬事如意！`; elements.successPopup.style.display="flex";
+            setTimeout(()=>{elements.godRaysContainer.style.display="none",document.querySelectorAll(".ray").forEach(e=>{e.classList.remove("play-animation")})},2500)
+        }
+
+        function handleXiaoJiao() {
+            const deityName = elements.persistentGodName.textContent; elements.xiaoJiaoPopupTitle.textContent = `${deityName} 笑而不答`; elements.xiaoJiaoPopupMessage.textContent = `${deityName} 可能覺得您的問題不夠清楚，或者還在考慮中。請試著將問題描述得更具體一點，再重新請示一次。`;
+            elements.editMatterTextarea.value=elements.matterInput.value; elements.xiaoJiaoPopup.style.display="flex"
+        }
+
+        function updateMatterAndContinue(){elements.matterInput.value=elements.editMatterTextarea.value,updatePetitionDisplay(),elements.xiaoJiaoPopup.style.display="none"}
+        function handleNonSacredJiao(e){elements.reEnterPopupTitle.textContent=consecutiveFailureCount>=3?"連續擲筊失敗！":"擲筊失敗！",elements.reEnterMessage.textContent=consecutiveFailureCount>=3?`您已連續擲筊失敗 ${consecutiveFailureCount} 次。是否重新填寫請示事項？`:`${e} 請選擇重新填寫資料或添香油錢繼續。`,elements.reEnterPopup.style.display="flex"}
+        function updateSacredJiaoCount(){elements.currentSacredJiaoSpan.textContent=currentSacredJiaoCount}
+        function reEnterData(){elements.reEnterPopup.style.display="none",currentSacredJiaoCount=0,consecutiveFailureCount=0,updateSacredJiaoCount(),elements.matterInput.value="",nextStep(2)}
+        
+        function donateOilMoney() {
+            const deityName = elements.persistentGodName.textContent; elements.reEnterPopup.style.display = 'none'; currentSacredJiaoCount = 0; updateSacredJiaoCount(); donatedGoodLuck = true; 
+            elements.giantCoinContainer.style.display = 'flex'; elements.reuseWarningDiv.textContent = `感謝您添的香油錢，${deityName} 保佑您！`; elements.reuseWarningDiv.classList.add('active');
+            setTimeout(() => elements.reuseWarningDiv.classList.remove('active'), 5000);
+            setTimeout(() => { let e = elements.giantCoinContainer.querySelector(".coin-icon"); e.style.animation = 'none'; void e.offsetWidth; e.style.animation = null; elements.giantCoinContainer.style.display = 'none'; nextStep(3); }, 3000);
+        }
+
+        function shareResult(){let e=`我在「擲筊祈福遊戲」中，誠心向 ${elements.persistentGodName.textContent} 請示，並圓滿獲得三個聖筊！你也快來試試吧！`;navigator.share?navigator.share({title:"擲筊祈福遊戲 - 喜悅分享",text:e,url:window.location.href}).catch(console.error):navigator.clipboard.writeText(e).then(()=>showCustomMessage("分享成功","結果已複製到您的剪貼簿，快貼給朋友看看吧！")).catch(e=>showCustomMessage("分享失敗","無法自動複製結果。"))}
+        function showCustomMessage(e,t){elements.customMessageTitle.textContent=e,elements.customMessageText.textContent=t,elements.customMessagePopup.style.display="flex"}
+        
+        function resetGame() {
+            elements.successPopup.style.display = 'none'; elements.smileAnimationContainer.style.display = 'none'; elements.godRaysContainer.style.display = 'none';
+            document.querySelectorAll(".ray").forEach(e => { e.classList.remove("play-animation") });
+            elements.successGodImage.style.display = 'none'; elements.successGodImage.src = '';
+            
+            // This is handled by the new logic in nextStep(), but we keep it here for robustness
+            elements.persistentGodInfo.style.display = 'none'; 
+            elements.persistentGodImage.src = '';
+            elements.persistentGodName.textContent = '';
+
+            currentSacredJiaoCount = 0; consecutiveFailureCount = 0; updateSacredJiaoCount(); selectedGod = null;
+            elements.godSelect.value = ""; elements.godInfoDiv.style.display = 'none'; elements.selectGodBtn.disabled = !0;
+            elements.matterInput.value = ""; elements.petitionMatterDisplay.textContent = "";
+            elements.jiao1.classList.remove("flat", "convex"); elements.jiao2.classList.remove("flat", "convex");
+            elements.jiaoResultDiv.textContent = ""; elements.jiaoResultDiv.className = "jiao-result";
+            elements.reuseWarningDiv.classList.remove("active");
+            nextStep(1);
+        }
+        jiao1.classList.add("flat"),jiao2.classList.add("flat"),window.addEventListener("load",loadUserData);
+    </script>
+</body>
+</html>
